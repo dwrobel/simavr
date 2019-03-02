@@ -190,7 +190,21 @@ gdb_send_reply(
 	}
 	sprintf((char*)dst, "#%02x", check);
 	DBG(printf("%s '%s'\n", __FUNCTION__, reply);)
-	send(g->s, reply, dst - reply + 3, 0);
+
+	const size_t to_send = dst - reply + 3;
+	size_t sent = 0;
+
+	while (to_send > sent) {
+		const ssize_t rv = send(g->s, reply + sent, to_send - sent, 0);
+
+		if (rv > 0) {
+			sent += rv;
+		}
+
+		if (rv == -1 && rv != EINTR) {
+			break;
+		}
+	}
 }
 
 static void
@@ -512,8 +526,21 @@ gdb_network_handler(
 
 	if (g->s != -1 && FD_ISSET(g->s, &read_set)) {
 		uint8_t buffer[1024];
+		ssize_t r = 0;
 
-		ssize_t r = recv(g->s, buffer, sizeof(buffer)-1, 0);
+		while (1) {
+			ssize_t rv = recv(g->s, buffer + r, sizeof(buffer) - r - 1, 0);
+
+			if (rv == EINTR) {
+				continue;
+			}
+
+			if (rv >= 0) {
+				r += rv;
+			}
+
+			break;
+		}
 
 		if (r == 0) {
 			printf("%s connection closed\n", __FUNCTION__);
@@ -551,7 +578,11 @@ gdb_network_handler(
 			src++;
 			DBG(printf("GDB command = '%s'\n", src);)
 
-			send(g->s, "+", 1, 0);
+			int rv;
+
+			do {
+				rv = send(g->s, "+", 1, 0);
+			} while (rv == -1 && errno == EINTR);
 
 			gdb_handle_command(g, (char*)src);
 		}
