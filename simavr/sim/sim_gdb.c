@@ -348,15 +348,12 @@ gdb_handle_command(
 			} else if (strncmp(cmd, "C", 1) == 0) { // Return the current thread ID.
 				gdb_send_reply(g, "QC 1");
 				break;
-			// } else if (strncmp(cmd, "fThreadInfo", 11) == 0) {
-			// 	gdb_send_reply(g, "m 1"); // all packets are active
-			// 	break;
-			// } else if (strncmp(cmd, "sThreadInfo", 11) == 0) {
-			// 	gdb_send_reply(g, "l"); // no more information
-			// 	break;
-			// } else if (strncmp(cmd, "qThreadExtraInfo", 16) == 0) {
-			// 	gdb_send_reply(g, "Runnable");
-			// 	break;
+			} else if (strncmp(cmd, "fThreadInfo", 11) == 0) {
+				gdb_send_reply(g, "m 1"); // all packets are active
+				break;
+			} else if (strncmp(cmd, "sThreadInfo", 11) == 0) {
+				gdb_send_reply(g, "l"); // no more information
+				break;
 			} else if (strncmp(cmd, "Symbol::", 8) == 0) {
 				gdb_send_reply(g, "OK");
 				break;
