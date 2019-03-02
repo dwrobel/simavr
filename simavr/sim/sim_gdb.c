@@ -357,18 +357,6 @@ gdb_handle_command(
 			// } else if (strncmp(cmd, "qThreadExtraInfo", 16) == 0) {
 			// 	gdb_send_reply(g, "Runnable");
 			// 	break;
-			} else if (strncmp(cmd, "Ravr.io_reg;", 12) == 0) {
-				int i;
-				size_t off = 0;
-
-				for (i = 0; i < 10; i++) {
-					off += snprintf(rep + off, sizeof(rep) - off, "Reg%d,%02x;", i, i);
-				}
-				gdb_send_reply(g, "");
-				break;
-			} else if (strncmp(cmd, "Ravr.io_reg", 11) == 0) {
-				gdb_send_reply(g, "0A");
-				break;
 			} else if (strncmp(cmd, "Symbol::", 8) == 0) {
 				gdb_send_reply(g, "OK");
 				break;
@@ -399,7 +387,7 @@ gdb_handle_command(
 					break;
 				}
 			printf("GDB: unknown vCont: %s\n", cmd);
-			gdb_send_reply(g, "OK");
+			gdb_send_reply(g, ""); // Empty (inline with respect to MustReplyEmpty)
 			break;
 		// case 'D':
 		// 	gdb_send_reply(g, "OK"); // Detach
@@ -410,6 +398,16 @@ gdb_handle_command(
 		case 'H':
 			gdb_send_reply(g, "OK");
 			break;
+		case 'T': {	// Find out if the thread is alive
+			uint32_t tid;
+			const int items = sscanf(cmd, "%d", &tid);
+			if (items == 1 && tid == 1) {
+				gdb_send_reply(g, "OK");
+			} else {
+				gdb_send_reply(g, "E 02");
+			}
+			break;
+		}
 		case '?':
 			gdb_send_quick_status(g, 0);
 			break;
