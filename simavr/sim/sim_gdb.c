@@ -360,7 +360,7 @@ gdb_handle_command(
 				gdb_send_reply(g, "OK");
 				break;
 			} else if (strncmp(cmd, "TStatus", 7) == 0) {
-				gdb_send_reply(g, "Ttnotrun:0");
+				gdb_send_reply(g, "T0;tnotrun:0");
 				break;
 			} else {
 				printf("GDB: unhandled command: %s\n", cmd);
