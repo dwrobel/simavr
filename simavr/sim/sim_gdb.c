@@ -349,13 +349,16 @@ gdb_handle_command(
 				gdb_send_reply(g, "QC 1");
 				break;
 			} else if (strncmp(cmd, "fThreadInfo", 11) == 0) {
-				gdb_send_reply(g, "m 1"); // all packets are active
+				gdb_send_reply(g, "m 1");
 				break;
 			} else if (strncmp(cmd, "sThreadInfo", 11) == 0) {
-				gdb_send_reply(g, "l"); // no more information
+				gdb_send_reply(g, "l");
 				break;
 			} else if (strncmp(cmd, "Symbol::", 8) == 0) {
 				gdb_send_reply(g, "OK");
+				break;
+			} else if (strncmp(cmd, "TStatus", 7) == 0) {
+				gdb_send_reply(g, "Ttnotrun:0");
 				break;
 			} else {
 				printf("GDB: unhandled command: %s\n", cmd);
