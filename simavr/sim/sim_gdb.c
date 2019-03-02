@@ -395,6 +395,9 @@ gdb_handle_command(
 		case '!': // Extended mode supported
 			gdb_send_reply(g, "OK");
 			break;
+		case 'D': // Detach gdb from the remote system
+			gdb_send_reply(g, "OK");
+			break;
 		case 'H':
 			gdb_send_reply(g, "OK");
 			break;
