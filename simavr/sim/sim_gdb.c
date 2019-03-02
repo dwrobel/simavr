@@ -310,7 +310,7 @@ gdb_handle_command(
 				 * the features we support, which is just memory layout
 				 * information for now.
 				 */
-				gdb_send_reply(g, "qXfer:memory-map:read+");
+				gdb_send_reply(g, "qXfer:memory-map:read+;qXfer:threads:read+");
 				break;
 			} else if (strncmp(cmd, "Attached", 8) == 0) {
 				/* Respond that we are attached to an existing process..
@@ -334,8 +334,81 @@ gdb_handle_command(
 
 				gdb_send_reply(g, rep);
 				break;
+			} else if (strncmp(cmd, "Xfer:threads:read", 17) == 0) {
+				snprintf(rep, sizeof(rep),
+						"l<threads>\n"
+						"  <thread id='1' core='0'>\n"
+									"%s\n"
+						"  </thread>\n"
+						"</threads>",
+						"main");
+
+				gdb_send_reply(g, rep);
+				break;
+			// } else if (strncmp(cmd, "C", 1) == 0) {
+			// 	gdb_send_reply(g, "QC 0"); // means "all threads"
+			// 	break;
+			// } else if (strncmp(cmd, "fThreadInfo", 11) == 0) {
+			// 	gdb_send_reply(g, "m 1"); // all packets are active
+			// 	break;
+			// } else if (strncmp(cmd, "sThreadInfo", 11) == 0) {
+			// 	gdb_send_reply(g, "l"); // no more information
+			// 	break;
+			// } else if (strncmp(cmd, "qThreadExtraInfo", 16) == 0) {
+			// 	gdb_send_reply(g, "Runnable");
+			// 	break;
+			} else if (strncmp(cmd, "Ravr.io_reg;", 12) == 0) {
+				int i;
+				size_t off = 0;
+
+				for (i = 0; i < 10; i++) {
+					off += snprintf(rep + off, sizeof(rep) - off, "Reg%d,%02x;", i, i);
+				}
+				gdb_send_reply(g, "");
+				break;
+			} else if (strncmp(cmd, "Ravr.io_reg", 11) == 0) {
+				gdb_send_reply(g, "0A");
+				break;
+			} else if (strncmp(cmd, "Symbol::", 8) == 0) {
+				gdb_send_reply(g, "OK");
+				break;
+			} else {
+				printf("GDB: unhandled command: %s\n", cmd);
 			}
 			gdb_send_reply(g, "");
+			break;
+			case 'v':
+				if (strncmp(cmd, "Kill;", 5) == 0) {
+					avr->state = cpu_StepDone;
+					gdb_send_reply(g, "OK");
+					break;
+				} else if (strncmp(cmd, "Cont?", 5) == 0) {
+					avr->state = cpu_Step;
+					gdb_send_reply(g, "vCont;s;c;");
+					break;
+				} else if (strncmp(cmd, "Cont;s", 6) == 0) {
+					avr->state = cpu_Step;
+					gdb_send_reply(g, "OK");
+					break;
+				} else if (strncmp(cmd, "Cont;c", 6) == 0) {
+					avr->state = cpu_Running;
+					gdb_send_reply(g, "OK");
+					break;
+				} else if (strncmp(cmd, "MustReplyEmpty", 14) == 0) {
+					gdb_send_reply(g, "");
+					break;
+				}
+			printf("GDB: unknown vCont: %s\n", cmd);
+			gdb_send_reply(g, "OK");
+			break;
+		// case 'D':
+		// 	gdb_send_reply(g, "OK"); // Detach
+		// 	break;
+		case '!': // Extended mode supported
+			gdb_send_reply(g, "OK");
+			break;
+		case 'H':
+			gdb_send_reply(g, "OK");
 			break;
 		case '?':
 			gdb_send_quick_status(g, 0);
@@ -443,6 +516,7 @@ gdb_handle_command(
 		case 's': {	// step
 			avr->state = cpu_Step;
 		}	break;
+		case 'R': // Restart the program being debugged. This packet is only available in extended mode.
 		case 'r': {	// deprecated, suggested for AVRStudio compatibility
 			avr->state = cpu_StepDone;
 			avr_reset(avr);
@@ -483,6 +557,7 @@ gdb_handle_command(
 			}
 		}	break;
 		default:
+			printf("GDB: unhandled request: %c\n", command);
 			gdb_send_reply(g, "");
 			break;
 	}
