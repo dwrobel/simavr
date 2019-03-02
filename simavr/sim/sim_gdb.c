@@ -345,9 +345,9 @@ gdb_handle_command(
 
 				gdb_send_reply(g, rep);
 				break;
-			// } else if (strncmp(cmd, "C", 1) == 0) {
-			// 	gdb_send_reply(g, "QC 0"); // means "all threads"
-			// 	break;
+			} else if (strncmp(cmd, "C", 1) == 0) { // Return the current thread ID.
+				gdb_send_reply(g, "QC 1");
+				break;
 			// } else if (strncmp(cmd, "fThreadInfo", 11) == 0) {
 			// 	gdb_send_reply(g, "m 1"); // all packets are active
 			// 	break;
